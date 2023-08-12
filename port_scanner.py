@@ -51,24 +51,42 @@ def main():
         print("Invalid host, try again")
         sys.exit(1)
 
-    if args.ports:
-        if "-" in args.ports:
-            start, end = [int(i) for i in args.ports.split("-")]
+    def parse_ports(args):
+        if "-" in args:
+            start, end = [int(i) for i in args.split("-")]
             ports = list(range(start, min(end + 1, 65536)))
         else:
-            ports = [int(p) for p in args.ports.split(",")]
+            ports = [int(p) for p in args.split(",")]
             ports = [p if p <= 65535 else 65535 for p in ports]
         protocols = [socket.SOCK_STREAM] * len(ports)
-    elif args.mainports:
-        ports = MAIN_PORTS
-        protocols = [socket.SOCK_STREAM] * len(ports)
-    elif args.range:
-        start, end = args.range.split("-")
+        return ports, protocols
+
+    def parse_range(args):
+        start, end = args.split("-")
         ports = range(int(start), min(int(end) + 1, 65536))
         protocols = [socket.SOCK_STREAM] * len(ports)
-    else:
+        return ports, protocols
+
+    def parse_mainports(args):
+        ports = MAIN_PORTS
+        protocols = [socket.SOCK_STREAM] * len(ports)
+        return ports, protocols
+
+    def parse_args(args):
+        parse_functions = {
+            "ports": parse_ports,
+            "mainports": parse_mainports,
+            "range": parse_range,
+        }
+
+        for arg, func in parse_functions.items():
+            if getattr(args, arg):
+                return func(getattr(args, arg))
+
         print("Args error")
         sys.exit(1)
+
+    ports, protocols = parse_args(args)
 
     results = []
     for i, port in enumerate(ports):
