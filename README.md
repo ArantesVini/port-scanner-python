@@ -31,7 +31,7 @@ This will scan the 1000 main TCP ports on the host at 192.168.1.1.
 - Python 3
 - argparse
 - socket
-- multiprocessing
+- threading
 
 ## License
 
