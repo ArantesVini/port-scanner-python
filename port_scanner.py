@@ -1,7 +1,9 @@
-import sys, socket, multiprocessing, argparse
+import sys
+import socket
+import threading
+import argparse
 
-
-MAIN_PORTS = main_ports = list(range(1, 1024))
+MAIN_PORTS = list(range(1, 1024))
 
 def port_scan(host, port, protocol):
     s = socket.socket(socket.AF_INET, protocol)
@@ -10,8 +12,8 @@ def port_scan(host, port, protocol):
         print(f"Port {port}/{protocol} open")
 
 def multi_process(host, port_scan, port, protocol):
-    l = multiprocessing.Process(target=port_scan, args=(host,str(port),protocol))
-    l.start()
+    t = threading.Thread(target=port_scan, args=(host,str(port),protocol))
+    t.start()
 
 def write_results_to_file(results, filename):
     with open(filename, 'w') as f:
@@ -34,15 +36,20 @@ def main():
         print("Invalid host, try again")
         sys.exit(1)
 
-    if args.mainports:
+    if args.ports:
+        if '-' in args.ports:
+            start, end = [int(i) for i in args.ports.split('-')]
+            ports = list(range(start, min(end+1, 65536)))
+        else:
+            ports = [int(p) for p in args.ports.split(',')]
+            ports = [p if p <= 65535 else 65535 for p in ports]
+        protocols = [socket.SOCK_STREAM] * len(ports)
+    elif args.mainports:
         ports = MAIN_PORTS
         protocols = [socket.SOCK_STREAM] * len(ports)
-    elif args.ports:
-        ports = args.ports
-        protocols = [socket.SOCK_STREAM] * len(ports.split(","))
     elif args.range:
         start, end = args.range.split("-")
-        ports = range(int(start), int(end) + 1)
+        ports = range(int(start), min(int(end) + 1, 65536))
         protocols = [socket.SOCK_STREAM] * len(ports)
     else:
         print("Args error")
