@@ -97,7 +97,7 @@ def main():
     if args.output:
         write_results_to_file(results, args.output)
 
-    sys.exit(0)  # Stop code execution after completing the task
+    sys.exit(0)
 
 
 if __name__ == "__main__":
